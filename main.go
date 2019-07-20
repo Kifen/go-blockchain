@@ -22,13 +22,15 @@ func main() {
 	}
 
 	go func() {
-		// initialize the blockchain
+		// Init the blockchain and create genesis block
 		genesisBlock := blockchain.InitBlockchain()
 		spew.Dump(genesisBlock)
 	}()
 	log.Fatal(run())
 
 }
+
+
 
 func run() error{
 	mux := makeMuxRouter()
@@ -83,7 +85,7 @@ func handleWriteBlock(writer http.ResponseWriter, request *http.Request) {
 	//prevBlock := blockChain.Blocks[len(blockChain.Blocks)-1]
 	if newBlock.IsBlockValid(prevBlock){
 		newBlocks := append(blockChain.Blocks, newBlock)
-		blockchain.ReplaceChain(newBlocks)
+		blockChain.ReplaceChain(newBlocks)
 		spew.Dump(blockChain.Blocks)
 	}
 }

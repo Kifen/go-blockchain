@@ -54,7 +54,7 @@ func CreateBlock(data string, oldBLock *Block) (*Block, error) {
 
 type blockchain struct {
 	Blocks []*Block
-	mu    sync.RWMutex
+	Mu    sync.RWMutex
 }
 
 var (
@@ -86,10 +86,12 @@ func InitBlockchain() *blockchain{
 	return b
 }
 
-func ReplaceChain(newBlocks[] *Block){
+func (b *blockchain)ReplaceChain(newBlocks[] *Block){
+	b.Mu.Lock()
 	if len(newBlocks) > len(Blockchain().Blocks){
 		b.Blocks = newBlocks
 	}
+	b.Mu.Unlock()
 
 }
 
