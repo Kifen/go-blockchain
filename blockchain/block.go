@@ -1,100 +1,66 @@
 package blockchain
 
 import (
+	"bytes"
 	"crypto/sha256"
-	"encoding/hex"
+	"strconv"
 	"sync"
 	"time"
 )
 
 type Block struct {
-	Index     int    // the position of the data record in the blockchain
-	Timestamp string //the time the data is written
-	Data      string
-	Hash      string // a SHA256 identifier representing this data record
-	PrevHash  string // hash of the previous block
+	Index        int
+	Data         []byte
+	TimeStamp    int64
+	PreviousHash []byte
+	Hash         []byte
+	Nonce int
+	Mu           sync.RWMutex
 }
 
-func (b *Block) DeriveHash() string {
-	record := b.PrevHash + b.Timestamp + string(b.Index) + b.Data
-	hash := sha256.New()
-	hash.Write([]byte(record))
-	hashed := hash.Sum(nil)
-	return hex.EncodeToString(hashed)
+func (block *Block) calculteHash() [32]byte{
+	timeStamp := []byte(strconv.FormatInt(block.TimeStamp, 10))
+	headers := bytes.Join([][]byte{block.PreviousHash, block.Data,
+		timeStamp}, []byte{})
+	hash := sha256.Sum256(headers)
+	return hash
 }
 
-func (b *Block) IsBlockValid(oldBlock *Block) bool {
-	if oldBlock.Index+1 != b.Index {
+func (b *Block) isBlockValid(prevBlock *Block) bool{
+	if  !bytes.Equal(b.PreviousHash, prevBlock.Hash){
 		return false
 	}
-
-	if oldBlock.Hash != b.PrevHash {
-		return false
+	if b.Index != prevBlock.Index+1{
+		return  false
 	}
-
-	if b.DeriveHash() != b.Hash {
-		return false
-	}
-
 	return true
 }
 
-func CreateBlock(data string, oldBLock *Block) (*Block, error) {
-	newBLock := &Block{}
 
-	t := time.Now()
-	newBLock.Index = oldBLock.Index + 1
-	newBLock.Timestamp = t.String()
-	newBLock.Data = data
-	newBLock.PrevHash = oldBLock.Hash
-	newBLock.Hash = newBLock.DeriveHash()
-
-	return newBLock, nil
+func createBlock(data string, index int) *Block{
+	bc := BlockChain()
+	prevBlock := bc.Blocks[(len(bc.Blocks)) - 1]
+	prevHash := prevBlock.Hash
+	newBlock := newBlock(data,prevHash, index)
+	return newBlock
 }
 
-type blockchain struct {
-	Blocks []*Block
-	Mu    sync.RWMutex
-}
-
-var (
-	b *blockchain = &blockchain{}
-)
-
-func (b *blockchain) NewBlock(data string) (*Block, *Block, error){
-	prevBlock := b.Blocks[len(b.Blocks)-1]
-	newBlock, err := CreateBlock(data, prevBlock)
-	//b.Blocks = append(b.Blocks, newBlock)
-
-	return newBlock, prevBlock, err
-}
-
-func genesis() *Block {
-	t := time.Now().String()
-	index := -1
-	genesis := &Block{
-		Index:     index,
-		Timestamp: t,
+func newBlock(data string, prevHash []byte, index int) *Block{
+	block := &Block{
+		TimeStamp: time.Now().Unix(),
+		Data:      []byte(data),
+		PreviousHash: prevHash,
+		//Nonce: 0,
 	}
-	block, _ := CreateBlock("Genesis", genesis)
+
+	block.Index = index
+	pow := NewProofWork(block)
+	nonce, hash := pow.Run()
+	block.Hash = hash[:]
+	block.Nonce = nonce
+
 	return block
 }
 
-func InitBlockchain() *blockchain{
-	newBLock := genesis()
-	b.Blocks = append(b.Blocks, newBLock)
-	return b
-}
 
-func (b *blockchain)ReplaceChain(newBlocks[] *Block){
-	b.Mu.Lock()
-	if len(newBlocks) > len(Blockchain().Blocks){
-		b.Blocks = newBlocks
-	}
-	b.Mu.Unlock()
 
-}
-
-func Blockchain() *blockchain{
-	return b
-}
