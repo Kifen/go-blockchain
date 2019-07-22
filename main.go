@@ -7,7 +7,7 @@ import (
 )
 
 func main(){
-	blockChain := blockchain.BlockChain()
+	blockChain := blockchain.InitBlockchain()
 
 	blockChain.AddBlock("Send 1 btc to Ivan")
 	blockChain.AddBlock("Send 2 btc ti KIfen")

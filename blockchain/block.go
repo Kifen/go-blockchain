@@ -3,6 +3,8 @@ package blockchain
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/gob"
+	"log"
 	"strconv"
 	"sync"
 	"time"
@@ -36,30 +38,46 @@ func (b *Block) isBlockValid(prevBlock *Block) bool{
 	return true
 }
 
+func (b *Block) serialize() []byte{
+	var res bytes.Buffer
+	encoder := gob.NewEncoder(&res)
+	err := encoder.Encode(b)
 
-func createBlock(data string, index int) *Block{
-	bc := BlockChain()
-	prevBlock := bc.Blocks[(len(bc.Blocks)) - 1]
-	prevHash := prevBlock.Hash
-	newBlock := newBlock(data,prevHash, index)
-	return newBlock
+	if err != nil{
+		log.Panic(err)
+	}
+
+	return res.Bytes()
 }
 
 func newBlock(data string, prevHash []byte, index int) *Block{
 	block := &Block{
 		TimeStamp: time.Now().Unix(),
 		Data:      []byte(data),
-		PreviousHash: prevHash,
+		//PreviousHash: prevHash,
 		//Nonce: 0,
 	}
 
 	block.Index = index
 	pow := NewProofWork(block)
+	block.PreviousHash = prevHash
 	nonce, hash := pow.Run()
 	block.Hash = hash[:]
 	block.Nonce = nonce
 
 	return block
+}
+
+func deserialize(data []byte) *Block{
+	var block Block
+	decoder := gob.NewDecoder(bytes.NewReader(data))
+	err := decoder.Decode(&block)
+
+	if err != nil{
+		log.Panicln(err)
+	}
+
+	return &block
 }
 
 

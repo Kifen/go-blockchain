@@ -2,22 +2,15 @@ package blockchain
 
 import "errors"
 
-var (
-	b = &Blockchain{[]*Block{genesisBlock()}}
-)
-
-func BlockChain()*Blockchain{
-	return b
-}
 
 type Blockchain struct {
 	Blocks []*Block
 }
 
 func (bc *Blockchain) AddBlock(data string) (*Block, error){
-	prevBlock := bc.Blocks[(len(b.Blocks))-1]
+	prevBlock := bc.Blocks[(len(bc.Blocks))-1]
 	index := prevBlock.Index + 1
-	newBlock := createBlock(data, index)
+	newBlock := bc.createBlock(data, index)
 
 	if newBlock.isBlockValid(prevBlock){
 		bc.Blocks = append(bc.Blocks, newBlock)
@@ -25,6 +18,17 @@ func (bc *Blockchain) AddBlock(data string) (*Block, error){
 	}
 
 	return nil, errors.New("Invalid Block...")
+}
+
+func (bc *Blockchain)createBlock(data string, index int) *Block{
+	prevBlock := bc.Blocks[(len(bc.Blocks)) - 1]
+	prevHash := prevBlock.Hash
+	newBlock := newBlock(data,prevHash, index)
+	return newBlock
+}
+
+func InitBlockchain() *Blockchain{
+	return &Blockchain{[]*Block{genesisBlock()}}
 }
 
 
