@@ -6,7 +6,6 @@ import (
 	"encoding/gob"
 	"log"
 	"strconv"
-	"sync"
 	"time"
 )
 
@@ -17,7 +16,6 @@ type Block struct {
 	PreviousHash []byte
 	Hash         []byte
 	Nonce int
-	Mu           sync.RWMutex
 }
 
 func (block *Block) calculteHash() [32]byte{
@@ -50,15 +48,13 @@ func (b *Block) serialize() []byte{
 	return res.Bytes()
 }
 
-func newBlock(data string, prevHash []byte, index int) *Block{
+func createBlock(data string, prevHash []byte) *Block{
 	block := &Block{
 		TimeStamp: time.Now().Unix(),
 		Data:      []byte(data),
 		//PreviousHash: prevHash,
 		//Nonce: 0,
 	}
-
-	block.Index = index
 	pow := NewProofWork(block)
 	block.PreviousHash = prevHash
 	nonce, hash := pow.Run()
