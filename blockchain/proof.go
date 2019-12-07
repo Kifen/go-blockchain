@@ -23,7 +23,7 @@ func (pow *ProofOfWork) Run() (int, []byte){
 		hash [32]byte
 	)
 	nonce := 0
-	fmt.Printf("Mining  block containing data -->\"%s\"\n", pow.Block.Data)
+	fmt.Printf("Mining  block containing data -->\"%s\"\n", pow.Block.Transactions)
 
 	for nonce <= math.MaxInt64{
 		data := pow.InitData(nonce)
@@ -50,7 +50,6 @@ func (pow *ProofOfWork) ValidatePow() bool{
 	return intHash.Cmp(pow.Target) == -1
 }
 
-
 func NewProofWork(b *Block) *ProofOfWork {
 	target := big.NewInt(1)
 	target.Lsh(target, uint(256-targetBits))
@@ -61,7 +60,7 @@ func NewProofWork(b *Block) *ProofOfWork {
 func (pow *ProofOfWork) InitData(nonce int) []byte{
 	data := bytes.Join([][]byte{
 		pow.Block.PreviousHash,
-		pow.Block.Data,
+		pow.Block.HashTransactions(),
 		IntToHex(pow.Block.TimeStamp),
 		IntToHex(int64(targetBits)),
 		IntToHex(int64(nonce)),},
